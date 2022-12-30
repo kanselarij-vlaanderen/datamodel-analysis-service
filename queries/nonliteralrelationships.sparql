@@ -1,0 +1,7 @@
+SELECT DISTINCT ?subjectType ?p ?objectType WHERE {
+  GRAPH <http://mu.semte.ch/graphs/organizations/kanselarij> {
+    ?s ?p ?o .
+    ?s a ?subjectType .
+    ?o a ?objectType .
+  }
+}

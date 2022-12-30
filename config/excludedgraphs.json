@@ -1,0 +1,14 @@
+[
+  "http://www.openlinksw.com/schemas/virtrdf#",
+  "http://www.w3.org/2002/07/owl#",
+  "http://localhost:8890/sparql",
+  "http://mu.semte.ch/application",
+  "http://mu.semte.ch/temp/6e50ea50-83b4-11ea-9451-b57668023fbf",
+  "http://mu.semte.ch/graphs/system/email",
+  "http://mu.semte.ch/graphs/delta-files",
+  "http://mu.semte.ch/graphs/system/users",
+  "http://mu.semte.ch/authorization",
+  "http://mu.semte.ch/temp/e5871970-3e7a-11ea-bd35-4b6c6be9e3e2",
+  "http://mu.semte.ch/graphs/system/errors",
+  "http://migrations.mu.semte.ch/926ff6cb-75e6-4bf6-905e-ac1c76252571"
+]

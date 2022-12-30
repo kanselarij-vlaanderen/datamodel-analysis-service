@@ -1,0 +1,82 @@
+<script
+  type="text/javascript"
+  src="/vis-network.min.js"
+></script>
+{{#if cacheWarmedup}}
+  <p>The image below visualizes the resource types in the current graph, along with their relationships and attribute types.</p>
+  <label for="graph-select">Choose a graph to visualize:</label>
+  <select name="graph-select" id="graph-select">
+    {{#each graphs}}
+      <option value="{{this}}">{{this}}</option>
+    {{/each}}
+  </select>
+  <div id="loader">
+    <svg version="1.1" id="L3" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 100 100" enable-background="new 0 0 0 0" xml:space="preserve">
+      <circle fill="none" stroke="#000" stroke-width="4" cx="50" cy="50" r="44" style="opacity:0.5;"/>
+      <circle fill="#000" stroke="#000" stroke-width="3" cx="8" cy="54" r="6" >
+      </circle>
+    </svg>
+  </div>
+  <div id="datanetwork"></div>
+  <style type="text/css">
+    #datanetwork {
+      width: 100%;
+      height: 85vh;
+      border: none;
+    }
+    #graph-select {
+      margin-right: 10px;
+    }
+    #loader {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+    }
+    #loader.hidden {
+      display: none;
+    }
+    #loader svg {
+      width: 18px;
+      height: 18px;
+      display:inline-block;
+    }
+  </style>
+  <script type="text/javascript">
+    var container = document.getElementById("datanetwork");
+    var graphs = {{{ serialized.graphs }}};
+    var currentGraph = graphs ? graphs[0] : undefined;
+    var visData = {{{ serialized.visData }}};
+
+    var drawCurrentGraph = function () {
+      if (visData && currentGraph) {
+        var loader = document.getElementById('loader');
+        loader.className = 'spinner';
+        var data = {
+          nodes: visData[currentGraph].nodes,
+          edges: visData[currentGraph].edges,
+        };
+        var options = {
+          physics: {
+            repulsion: {
+              nodeDistance: 200
+            }
+          }
+        };
+        var network = new vis.Network(container, data, options);
+        network.on('afterDrawing', function (e) {
+          loader.className = 'hidden';
+        });
+      }
+    };
+
+    var graphSelect = document.getElementById('graph-select');
+    graphSelect.addEventListener('change', function (e) {
+      currentGraph = graphSelect.value;
+      drawCurrentGraph();
+    });
+    drawCurrentGraph();
+  </script>
+{{else}}
+  <h1>Working on it</h1>
+  <p>The service is still working on analysing the data in the triplestore. Give it a few more minutes.</p>
+{{/if}}

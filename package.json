@@ -1,0 +1,18 @@
+{
+  "name": "datamodel-analysis-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tom De Nies",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express-handlebars": "^6.0.6",
+    "fastest-levenshtein": "^1.0.12",
+    "handlebars": "^4.7.7",
+    "vis-network": "^9.1.2"
+  }
+}

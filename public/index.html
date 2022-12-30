@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datamodel Analysis Service</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <h1>Datamodel Analysis Service</h1>
+    <h2>Pages</h2>
+    <ul>
+      <li><a href="/visualize">/visualize</a> Shows an interactive diagram of all data structures in the triplestore.</li>
+    </ul>
+    <h2>Other data</h2>
+    <ul>
+      <li><a href="/cache-warmed-up">/cache-warmed-up</a> true if the essential queries have been cached</li>
+      <li><a href="/all-graphs">/all-graphs</a> a list of graphs in the triplestore which will be included/excluded in the analysis (configure in config/excludedgraphs.json)</li>
+      <li><a href="/all-relationships">/all-relationships</a> all (non-literal) relationships between resources in each non-excluded graph</li>
+      <li><a href="/all-attributes">/all-attributes</a> all (literal) attributes for resources in each non-excluded graph</li>
+    </ul>
+</body>
+</html>
