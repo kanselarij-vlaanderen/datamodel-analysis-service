@@ -1,19 +1,8 @@
 import { query, sparqlEscapeUri } from 'mu';
 import { parseSparqlResults } from './parseSparqlResults';
-import prefixes from '../config/prefixes.json';
 import excludedGraphs from '../config/excludedgraphs.json';
 import caching from '../util/caching';
 const CACHE_FILE_NAME = 'datamodel-analysis-service-cache';
-/* Replace all occurences in a string of a full URI that corresponds with a known prefix by that prefix */
-const addPrefixes = function (string) {
-  for (const prefix in prefixes) {
-    if (prefixes.hasOwnProperty(prefix)) {
-      string = string.replace(prefixes[prefix], prefix + ':');
-    }
-  }
-  return string;
-};
-
 /* Keep a cache of the query results for quicker results on each restart */
 let queryCache = {};
 caching.getLocalJSONFile(CACHE_FILE_NAME).then((localResult) => {
@@ -99,24 +88,5 @@ export default {
       results[graph] = resultsForGraph.filter((result) => { return result.objectType !== undefined; });
     }
     return results;
-  },
-
-  /* Takes a result (array, object or string) with full URIs and replaces them by their prefixes for human-readable results */
-  subsitutePrefixes: function (result) {
-    if (Array.isArray(result)) {
-      return result.map((resultItem) => { return this.subsitutePrefixes(resultItem); });
-    } else if (typeof result === 'object') {
-      let resultCopy = {};
-      for (const key in result) {
-        if (result.hasOwnProperty(key)) {
-          resultCopy[this.subsitutePrefixes(key)] = this.subsitutePrefixes(result[key]);
-        }
-      }
-      return resultCopy;
-    } else if (typeof result === 'string') {
-      return addPrefixes(result)
-    } else {
-      return result;
-    }
   }
 };

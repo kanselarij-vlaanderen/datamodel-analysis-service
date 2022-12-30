@@ -3,7 +3,12 @@
   src="/vis-network.min.js"
 ></script>
 {{#if cacheWarmedup}}
-  <p>The image below visualizes the resource types in the current graph, along with their relationships and attribute types.</p>
+  <p>The image below visualizes the resource types in the current graph, along with their relationships and attribute types. Attributes are grouped by type by default. They can be separated by <a href="/visualize?attributeGrouping=individual">attributeGrouping=individual</a></p>
+  <p>The following SHACL templates can be highlighted:
+    {{#each shaclTemplates}}
+      <a href="/visualize?highlightSHACL={{this}}">{{this}}</a>
+    {{/each}}
+  </p>
   <label for="graph-select">Choose a graph to visualize:</label>
   <select name="graph-select" id="graph-select">
     {{#each graphs}}

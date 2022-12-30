@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 import database from '../util/database';
+import prefixes from '../util/prefixes';
+import shacl from '../util/shacl';
 
 /* Warm up the cache*/
 database.getGraphs()
@@ -27,7 +29,7 @@ router.get('/cache-warmed-up', async function(req, res) {
 router.get('/all-graphs', async function(req, res) {
   try {
     let results = await database.getGraphs();
-    res.send(database.subsitutePrefixes(results));
+    res.send(prefixes.subsitutePrefixes(results));
   } catch (e) {
     console.log(e);
     res.status(500).send(e);
@@ -37,7 +39,7 @@ router.get('/all-graphs', async function(req, res) {
 router.get('/all-relationships', async function(req, res) {
   try {
     let results = await database.getRelationships(req.query.limit);
-    res.send(database.subsitutePrefixes(results));
+    res.send(prefixes.subsitutePrefixes(results));
   } catch (e) {
     console.log(e);
     res.status(500).send(e);
@@ -47,7 +49,7 @@ router.get('/all-relationships', async function(req, res) {
 router.get('/all-attributes', async function(req, res) {
   try {
     let results = await database.getAttributes(req.query.limit);
-    res.send(database.subsitutePrefixes(results));
+    res.send(prefixes.subsitutePrefixes(results));
   } catch (e) {
     console.log(e);
     res.status(500).send(e);
@@ -60,9 +62,10 @@ router.get('/visualize', async (req, res) => {
   if (cacheWarmedup) {
     let graphsResult = await database.getGraphs();
     let relationships = await database.getRelationships();
-    relationships = database.subsitutePrefixes(relationships);
+    relationships = prefixes.subsitutePrefixes(relationships);
     let attributes = await database.getAttributes();
-    attributes = database.subsitutePrefixes(attributes);
+    attributes = prefixes.subsitutePrefixes(attributes);
+    let highlightSHACL = req.query.highlightSHACL;
     let visData = {};
     for (const graph of graphsResult.graphs) {
       visData[graph] = {
@@ -73,15 +76,39 @@ router.get('/visualize', async (req, res) => {
       let currentId = 1;
       if (relationships[graph]) {
         for (let i = 0; i < relationships[graph].length; i++) {
+          if (highlightSHACL) {
+            // look into the SHACL templates
+            relationships[graph][i].shaclTemplates = shacl.getShaclTemplatesForRelation(relationships[graph][i].subjectType, relationships[graph][i].p, relationships[graph][i].objectType);
+          }
           // add the node for the subject resource type
           if (!ids[relationships[graph][i].subjectType]) {
-            visData[graph].nodes.push({ id: currentId + 1, label: relationships[graph][i].subjectType, shape: 'box' });
+            let subjectNode = { id: currentId + 1, label: relationships[graph][i].subjectType, shape: 'box' };
+            if (highlightSHACL) {
+              // look into the SHACL templates
+              let shaclTemplates = shacl.getShaclTemplatesForSubject(relationships[graph][i].subjectType);
+              if (shaclTemplates && shaclTemplates.length > 0) {
+                subjectNode.color = 'rgb(4, 207, 38)';
+              } else {
+                subjectNode.color = 'rgba(52, 161, 235,0.1)';
+              }
+            }
+            visData[graph].nodes.push(subjectNode);
             ids[relationships[graph][i].subjectType] = currentId + 1;
             currentId++;
           }
           // add the node for the object resource type
           if (!ids[relationships[graph][i].objectType]) {
-            visData[graph].nodes.push({ id: currentId + 1, label: relationships[graph][i].objectType, shape: 'box' });
+            let objectNode = { id: currentId + 1, label: relationships[graph][i].objectType, shape: 'box' };
+            if (highlightSHACL) {
+              // look into the SHACL templates
+              let shaclTemplates = shacl.getShaclTemplatesForSubject(relationships[graph][i].objectType);
+              if (shaclTemplates && shaclTemplates.length > 0) {
+                objectNode.color = 'rgb(4, 207, 38)';
+              } else {
+                objectNode.color = 'rgba(52, 161, 235, 0.5)';
+              }
+            }
+            visData[graph].nodes.push(objectNode);
             ids[relationships[graph][i].objectType] = currentId + 1;
             currentId++;
           }
@@ -90,31 +117,51 @@ router.get('/visualize', async (req, res) => {
             from: ids[relationships[graph][i].subjectType],
             to: ids[relationships[graph][i].objectType],
             arrows: "to",
-            label: relationships[graph][i].p
+            label: relationships[graph][i].p,
+            color: highlightSHACL && relationships[graph][i].shaclTemplates.indexOf(highlightSHACL) > -1 ? 'rgb(4, 207, 38)' : 'rgba(52, 161, 235, 0.5)',
+            dashes: highlightSHACL && relationships[graph][i].shaclTemplates.indexOf(highlightSHACL) === -1 ? true : false,
+            width: highlightSHACL && relationships[graph][i].shaclTemplates.indexOf(highlightSHACL) > -1 ? 2 : undefined
           });
         }
       }
       if (attributes[graph]) {
         for (let i = 0; i < attributes[graph].length; i++) {
+          if (highlightSHACL) {
+            // look into the SHACL templates
+            attributes[graph][i].shaclTemplates = shacl.getShaclTemplatesForRelation(attributes[graph][i].subjectType, attributes[graph][i].p, attributes[graph][i].objectType);
+          }
           // add the node for the subject resource type
           if (!ids[attributes[graph][i].subjectType]) {
-            visData[graph].nodes.push({ id: currentId + 1, label: attributes[graph][i].subjectType, shape: 'box' });
+            let subjectNode = { id: currentId + 1, label: attributes[graph][i].subjectType, shape: 'box' };
+            if (highlightSHACL) {
+              // look into the SHACL templates
+              let shaclTemplates = shacl.getShaclTemplatesForSubject(attributes[graph][i].subjectType);
+              if (shaclTemplates && shaclTemplates.length > 0) {
+                subjectNode.color = 'rgb(4, 207, 38)';
+              } else {
+                subjectNode.color = 'rgba(52, 161, 235,0.1)';
+              }
+            }
+            visData[graph].nodes.push(subjectNode);
             ids[attributes[graph][i].subjectType] = currentId + 1;
             currentId++;
           }
           // add a new node for an attribute per subject resource type, or the network graphs get too dense
-          let subjectAttribute = attributes[graph][i].subjectType + '-' + attributes[graph][i].objectType;
-          if (!ids[subjectAttribute]) {
+          let attributeId = req.query.attributeGrouping === 'individual' ? attributes[graph][i].objectType + (currentId + 1) : attributes[graph][i].subjectType + '-' + attributes[graph][i].objectType;
+          if (!ids[attributeId]) {
             visData[graph].nodes.push({ id: currentId + 1, label: attributes[graph][i].objectType, shape: 'box', color: 'orange' });
-            ids[subjectAttribute] = currentId + 1;
+            ids[attributeId] = currentId + 1;
             currentId++;
           }
           // add the arrow
           visData[graph].edges.push({
             from: ids[attributes[graph][i].subjectType],
-            to: ids[subjectAttribute],
+            to: ids[attributeId],
             arrows: "to",
-            label: attributes[graph][i].p
+            label: attributes[graph][i].p,
+            color: highlightSHACL && attributes[graph][i].shaclTemplates.indexOf(highlightSHACL) > -1 ? 'rgb(4, 207, 38)' : 'rgba(52, 161, 235, 0.5)',
+            dashes: highlightSHACL && attributes[graph][i].shaclTemplates.indexOf(highlightSHACL) === -1 ? true : false,
+            width: highlightSHACL && attributes[graph][i].shaclTemplates.indexOf(highlightSHACL) === -1 ? 2 : undefined
           });
         }
       }
@@ -123,6 +170,7 @@ router.get('/visualize', async (req, res) => {
       title: 'Datamodel visualization',
       cacheWarmedup: true,
       graphs: graphsResult.graphs,
+      shaclTemplates: shacl.getShaclTemplateNames(),
       serialized: {
         // these will be fed to the javascript on the page, and need to be stringified for this to happen
         graphs: JSON.stringify(graphsResult.graphs),
