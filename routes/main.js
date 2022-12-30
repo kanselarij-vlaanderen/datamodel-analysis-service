@@ -78,14 +78,14 @@ router.get('/visualize', async (req, res) => {
         for (let i = 0; i < relationships[graph].length; i++) {
           if (highlightSHACL) {
             // look into the SHACL templates
-            relationships[graph][i].shaclTemplates = shacl.getShaclTemplatesForRelation(relationships[graph][i].subjectType, relationships[graph][i].p, relationships[graph][i].objectType);
+            relationships[graph][i].shaclTemplates = shacl.getShaclTemplatesForRelation(relationships[graph][i].subjectType, relationships[graph][i].p, relationships[graph][i].objectType, req.query.ignorehttps === 'true');
           }
           // add the node for the subject resource type
           if (!ids[relationships[graph][i].subjectType]) {
             let subjectNode = { id: currentId + 1, label: relationships[graph][i].subjectType, shape: 'box' };
             if (highlightSHACL) {
               // look into the SHACL templates
-              let shaclTemplates = shacl.getShaclTemplatesForSubject(relationships[graph][i].subjectType);
+              let shaclTemplates = shacl.getShaclTemplatesForSubject(relationships[graph][i].subjectType, req.query.ignorehttps === 'true');
               if (shaclTemplates && shaclTemplates.length > 0) {
                 subjectNode.color = 'rgb(4, 207, 38)';
               } else {
@@ -101,7 +101,7 @@ router.get('/visualize', async (req, res) => {
             let objectNode = { id: currentId + 1, label: relationships[graph][i].objectType, shape: 'box' };
             if (highlightSHACL) {
               // look into the SHACL templates
-              let shaclTemplates = shacl.getShaclTemplatesForSubject(relationships[graph][i].objectType);
+              let shaclTemplates = shacl.getShaclTemplatesForSubject(relationships[graph][i].objectType, req.query.ignorehttps === 'true');
               if (shaclTemplates && shaclTemplates.length > 0) {
                 objectNode.color = 'rgb(4, 207, 38)';
               } else {
@@ -128,14 +128,14 @@ router.get('/visualize', async (req, res) => {
         for (let i = 0; i < attributes[graph].length; i++) {
           if (highlightSHACL) {
             // look into the SHACL templates
-            attributes[graph][i].shaclTemplates = shacl.getShaclTemplatesForRelation(attributes[graph][i].subjectType, attributes[graph][i].p, attributes[graph][i].objectType);
+            attributes[graph][i].shaclTemplates = shacl.getShaclTemplatesForRelation(attributes[graph][i].subjectType, attributes[graph][i].p, attributes[graph][i].objectType, req.query.ignorehttps === 'true');
           }
           // add the node for the subject resource type
           if (!ids[attributes[graph][i].subjectType]) {
             let subjectNode = { id: currentId + 1, label: attributes[graph][i].subjectType, shape: 'box' };
             if (highlightSHACL) {
               // look into the SHACL templates
-              let shaclTemplates = shacl.getShaclTemplatesForSubject(attributes[graph][i].subjectType);
+              let shaclTemplates = shacl.getShaclTemplatesForSubject(attributes[graph][i].subjectType, req.query.ignorehttps === 'true');
               if (shaclTemplates && shaclTemplates.length > 0) {
                 subjectNode.color = 'rgb(4, 207, 38)';
               } else {

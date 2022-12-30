@@ -32,10 +32,20 @@ export default {
     return shaclTemplates.map((item) => { return item.name; })
   },
   /* Checks if a subject appears in a shaclTemplate */
-  isValidSubject: function (shaclTemplate, subjectType) {
+  isValidSubject: function (shaclTemplate, subjectType, ignorehttps) {
     try {
-      const nodeShape = shaclTemplate.store.any(undefined, SHACL('targetClass'), rdflib.sym(prefixes.removePrefixes(subjectType)));
-      return nodeShape && nodeShape.value;
+      let nodeShape = shaclTemplate.store.any(undefined, SHACL('targetClass'), rdflib.sym(prefixes.removePrefixes(subjectType)));
+      if (nodeShape && nodeShape.value) {
+        return true;
+      } else if (ignorehttps) {
+        let nodeShape = shaclTemplate.store.any(undefined, SHACL('targetClass'), rdflib.sym(prefixes.removePrefixes(subjectType).replace('https://', 'http://')));
+        if (nodeShape && nodeShape.value) {
+          return true;
+        } else {
+          let nodeShape = shaclTemplate.store.any(undefined, SHACL('targetClass'), rdflib.sym(prefixes.removePrefixes(subjectType).replace('http://', 'https://')));
+          return nodeShape && nodeShape.value;
+        }
+      }
     } catch (e) {
       console.log(e);
       return false;
@@ -43,10 +53,10 @@ export default {
   },
 
   /* Checks all SHACL templates for a given subject, and returns an array of template names where the shape is present */
-  getShaclTemplatesForSubject: function (subjectType) {
+  getShaclTemplatesForSubject: function (subjectType, ignorehttps) {
     let validShaclTemplates = [];
     for (const shaclTemplate of shaclTemplates) {
-      let isValid = this.isValidSubject(shaclTemplate, subjectType);
+      let isValid = this.isValidSubject(shaclTemplate, subjectType, ignorehttps);
       if (isValid) {
         validShaclTemplates.push(shaclTemplate.name);
       }
@@ -55,7 +65,7 @@ export default {
   },
 
   /* Checks a SHACL template for a given subject-predicate-object relationship and returns true if it is present in any shape, false if not. */
-  isValidRelation: function (shaclTemplate, subjectType, predicate, objectType) {
+  isValidRelation: function (shaclTemplate, subjectType, predicate, objectType, ignorehttps) {
     try {
       // SPARQL queries and rdflib don't mix well. We're basically querying manually here
       // first check if a NodeShape exists with this subjectType as targetClass
