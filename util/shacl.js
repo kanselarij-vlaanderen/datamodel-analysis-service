@@ -38,11 +38,53 @@ export default {
       if (nodeShape && nodeShape.value) {
         return true;
       } else if (ignorehttps) {
-        let nodeShape = shaclTemplate.store.any(undefined, SHACL('targetClass'), rdflib.sym(prefixes.removePrefixes(subjectType).replace('https://', 'http://')));
+        nodeShape = shaclTemplate.store.any(undefined, SHACL('targetClass'), rdflib.sym(prefixes.removePrefixes(subjectType).replace('https://', 'http://')));
         if (nodeShape && nodeShape.value) {
           return true;
         } else {
-          let nodeShape = shaclTemplate.store.any(undefined, SHACL('targetClass'), rdflib.sym(prefixes.removePrefixes(subjectType).replace('http://', 'https://')));
+          nodeShape = shaclTemplate.store.any(undefined, SHACL('targetClass'), rdflib.sym(prefixes.removePrefixes(subjectType).replace('http://', 'https://')));
+          return nodeShape && nodeShape.value;
+        }
+      }
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+  },
+
+  /* Checks if an object appears in a shaclTemplate */
+  isValidObject: function (shaclTemplate, objectType, ignorehttps) {
+    try {
+      let nodeShape = shaclTemplate.store.any(undefined, SHACL('class'), rdflib.sym(prefixes.removePrefixes(objectType)));
+      if (nodeShape && nodeShape.value) {
+        return true;
+      } else if (ignorehttps) {
+        nodeShape = shaclTemplate.store.any(undefined, SHACL('class'), rdflib.sym(prefixes.removePrefixes(objectType).replace('https://', 'http://')));
+        if (nodeShape && nodeShape.value) {
+          return true;
+        } else {
+          nodeShape = shaclTemplate.store.any(undefined, SHACL('class'), rdflib.sym(prefixes.removePrefixes(objectType).replace('http://', 'https://')));
+          return nodeShape && nodeShape.value;
+        }
+      }
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+  },
+
+  /* Checks if an attribute appears in a shaclTemplate */
+  isValidAttribute: function (shaclTemplate, dataType, ignorehttps) {
+    try {
+      let nodeShape = shaclTemplate.store.any(undefined, SHACL('datatype'), rdflib.sym(prefixes.removePrefixes(dataType)));
+      if (nodeShape && nodeShape.value) {
+        return true;
+      } else if (ignorehttps) {
+        nodeShape = shaclTemplate.store.any(undefined, SHACL('datatype'), rdflib.sym(prefixes.removePrefixes(dataType).replace('https://', 'http://')));
+        if (nodeShape && nodeShape.value) {
+          return true;
+        } else {
+          nodeShape = shaclTemplate.store.any(undefined, SHACL('datatype'), rdflib.sym(prefixes.removePrefixes(dataType).replace('http://', 'https://')));
           return nodeShape && nodeShape.value;
         }
       }
@@ -64,31 +106,87 @@ export default {
     return validShaclTemplates;
   },
 
+
+  /* Checks all SHACL templates for a given subject, and returns an array of template names where the shape is present */
+  getShaclTemplatesForObject: function (objectType, ignorehttps) {
+    let validShaclTemplates = [];
+    for (const shaclTemplate of shaclTemplates) {
+      let isValid = this.isValidObject(shaclTemplate, objectType, ignorehttps);
+      if (isValid) {
+        validShaclTemplates.push(shaclTemplate.name);
+      }
+    }
+    return validShaclTemplates;
+  },
+
+
+  /* Checks all SHACL templates for a given subject, and returns an array of template names where the shape is present */
+  getShaclTemplatesForAttribute: function (dataType, ignorehttps) {
+    let validShaclTemplates = [];
+    for (const shaclTemplate of shaclTemplates) {
+      let isValid = this.isValidAttribute(shaclTemplate, dataType, ignorehttps);
+      if (isValid) {
+        validShaclTemplates.push(shaclTemplate.name);
+      }
+    }
+    return validShaclTemplates;
+  },
+
   /* Checks a SHACL template for a given subject-predicate-object relationship and returns true if it is present in any shape, false if not. */
   isValidRelation: function (shaclTemplate, subjectType, predicate, objectType, ignorehttps) {
     try {
       // SPARQL queries and rdflib don't mix well. We're basically querying manually here
       // first check if a NodeShape exists with this subjectType as targetClass
-      const nodeShape = shaclTemplate.store.any(undefined, SHACL('targetClass'), rdflib.sym(prefixes.removePrefixes(subjectType)));
+      let nodeShape = shaclTemplate.store.any(undefined, SHACL('targetClass'), rdflib.sym(prefixes.removePrefixes(subjectType)));
+      if (!nodeShape && ignorehttps) {
+        nodeShape = shaclTemplate.store.any(undefined, SHACL('targetClass'), rdflib.sym(prefixes.removePrefixes(subjectType).replace('https://', 'http://')));
+        if (!nodeShape) {
+          nodeShape = shaclTemplate.store.any(undefined, SHACL('targetClass'), rdflib.sym(prefixes.removePrefixes(subjectType).replace('http://', 'https://')));
+        }
+      }
       if (nodeShape && nodeShape.value) {
         // now we can look if the relationship exists within this shape
-        const properties = shaclTemplate.store.each(rdflib.sym(nodeShape.value), SHACL('property'));
+        const properties = shaclTemplate.store.each(rdflib.sym(nodeShape.value), SHACL('property')); // NOTE: ignorehttps gets handled at the predicate level
         if (properties && properties.length > 0) {
           for (const property of properties) {
-            const objectMatches = shaclTemplate.store.statementsMatching(property, SHACL('class'), rdflib.sym(prefixes.removePrefixes(objectType)));
+            let objectMatches = shaclTemplate.store.statementsMatching(property, SHACL('class'), rdflib.sym(prefixes.removePrefixes(objectType)));
+            if ((!objectMatches || objectMatches.length === 0) && ignorehttps) {
+              objectMatches = shaclTemplate.store.statementsMatching(property, SHACL('class'), rdflib.sym(prefixes.removePrefixes(objectType).replace('https://', 'http://')));
+              if (!objectMatches || objectMatches.length === 0) {
+                objectMatches = shaclTemplate.store.statementsMatching(property, SHACL('class'), rdflib.sym(prefixes.removePrefixes(objectType).replace('http://', 'https://')));
+              }
+            }
             if (objectMatches && objectMatches.length > 0) {
               // the object is the correct one according to the SHACL shape, so we can now check the predicate
-              const predicateMatches = shaclTemplate.store.statementsMatching(property, SHACL('path'), rdflib.sym(prefixes.removePrefixes(predicate)));
+              let predicateMatches = shaclTemplate.store.statementsMatching(property, SHACL('path'), rdflib.sym(prefixes.removePrefixes(predicate)));
+              if ((!predicateMatches || predicateMatches.length === 0) && ignorehttps) {
+                predicateMatches = shaclTemplate.store.statementsMatching(property, SHACL('path'), rdflib.sym(prefixes.removePrefixes(predicate).replace('https://', 'http://')));
+                if (!objectMatches || objectMatches.length === 0) {
+                  predicateMatches = shaclTemplate.store.statementsMatching(property, SHACL('path'), rdflib.sym(prefixes.removePrefixes(predicate).replace('http://', 'https://')));
+                }
+              }
               if (predicateMatches && predicateMatches.length > 0) {
                 // this property has the correct subject targetClass, object class, and predicate path. So it must be valid
                 return true;
               }
             } else {
               // this could be an attribute, in which case we need to check shacl:datatype instead
-              const attributeMatches = shaclTemplate.store.statementsMatching(property, SHACL('datatype'), rdflib.sym(prefixes.removePrefixes(objectType)));
+              let attributeMatches = shaclTemplate.store.statementsMatching(property, SHACL('datatype'), rdflib.sym(prefixes.removePrefixes(objectType)));
+              if ((!attributeMatches || attributeMatches.length === 0) && ignorehttps) {
+                attributeMatches = shaclTemplate.store.statementsMatching(property, SHACL('datatype'), rdflib.sym(prefixes.removePrefixes(objectType).replace('https://', 'http://')));
+                if (!attributeMatches || attributeMatches.length === 0) {
+                  attributeMatches = shaclTemplate.store.statementsMatching(property, SHACL('datatype'), rdflib.sym(prefixes.removePrefixes(objectType).replace('http://', 'https://')));
+                }
+              }
               if (attributeMatches && attributeMatches.length > 0) {
                 // the object is the correct one according to the SHACL shape, so we can now check the predicate
-                const predicateMatches = shaclTemplate.store.statementsMatching(property, SHACL('path'), rdflib.sym(prefixes.removePrefixes(predicate)));
+                let predicateMatches = shaclTemplate.store.statementsMatching(property, SHACL('path'), rdflib.sym(prefixes.removePrefixes(predicate)));
+                if ((!predicateMatches || predicateMatches.length === 0) && ignorehttps) {
+                  predicateMatches = shaclTemplate.store.statementsMatching(property, SHACL('path'), rdflib.sym(prefixes.removePrefixes(predicate).replace('https://', 'http://')));
+                  if (!objectMatches || objectMatches.length === 0) {
+                    predicateMatches = shaclTemplate.store.statementsMatching(property, SHACL('path'), rdflib.sym(prefixes.removePrefixes(predicate).replace('http://', 'https://')));
+                  }
+                }
                 if (predicateMatches && predicateMatches.length > 0) {
                   // this property has the correct subject targetClass, object class, and predicate path. So it must be valid
                   return true;
