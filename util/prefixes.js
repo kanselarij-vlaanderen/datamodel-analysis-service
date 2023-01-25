@@ -1,5 +1,4 @@
-import prefixes from '../config/prefixes.json';
-
+import prefixes from '/config/prefixes';
 /* Replace all occurences in a string of a full URI that corresponds with a known prefix by that prefix */
 const addPrefixes = function (string) {
   for (const prefix in prefixes) {

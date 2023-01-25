@@ -19,6 +19,9 @@ datamodel-analysis-service:
     - triplestore:database
   volumes:
     - /path/to/your/data/directory/:/data/
+    - /path/to/your/src/directory/datamodel-analysis-service/config/:/config/
+    - /path/to/your/src/directory/datamodel-analysis-service/public/:/public/
+    - /path/to/your/src/directory/datamodel-analysis-service/views/:/views/
 ```
 
 The service will then be accessible at http://localhost:8889/

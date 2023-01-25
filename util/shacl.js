@@ -7,13 +7,13 @@ import prefixes from './prefixes';
   These templates will then be loaded here, and can be used to look up whether a given subject-predicate-object relationship is a valid shape for this template.
 */
 const SHACL = rdflib.Namespace("http://www.w3.org/ns/shacl#");
-const normalizedPath = path.join(__dirname, "..", "config", "shacl");
+const normalizedPath = path.join("/config", "shacl");
 let shaclTemplates = [];
 fsp.readdir(normalizedPath).then(async (files) => {
   if (files) {
     for (const file of files) {
       let rdfStore = rdflib.graph();
-      let shacl = await fsp.readFile(path.join(__dirname, "..", "config", "shacl", file), "utf8");
+      let shacl = await fsp.readFile(path.join("/config", "shacl", file), "utf8");
       try {
         rdflib.parse(shacl, rdfStore, 'http://localhost:8889/shacl/' + file, 'text/turtle');
       } catch (err) {

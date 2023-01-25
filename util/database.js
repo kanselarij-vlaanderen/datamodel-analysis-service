@@ -1,6 +1,6 @@
 import { query, sparqlEscapeUri } from 'mu';
 import { parseSparqlResults } from './parseSparqlResults';
-import excludedGraphs from '../config/excludedgraphs.json';
+import excludedGraphs from '/config/excludedgraphs';
 import caching from '../util/caching';
 const CACHE_FILE_NAME = 'datamodel-analysis-service-cache';
 /* Keep a cache of the query results for quicker results on each restart */
