@@ -53,8 +53,61 @@ export default {
     };
   },
 
-  /* Get all (non-literal) relationships between resources for each non-excluded graph */
-  getRelationships: async function (limit) {
+  /* Get all types used in each non-excluded graph.
+  filterPrefix Allows a search term to be added to filter the subjectTypes, objectTypes and predicates for a specific prefix (useful for domain mapping) */
+  getTypes: async function (limit, filterPrefix) {
+    let results = {};
+    let graphsInDB = await this.getGraphs();
+    for (const graph of graphsInDB.graphs) {
+      const typeQuery = `SELECT DISTINCT ?subjectType WHERE {
+        GRAPH <${graph}> {
+          ?s a ?subjectType .
+        }
+      }
+      `;
+      results[graph] = await this.executeQuery(typeQuery, limit);
+    }
+    if (filterPrefix) {
+      let filteredResults = {};
+      for (const graph in results) {
+        if (results.hasOwnProperty(graph)) {
+          filteredResults[graph] = results[graph].filter((result) => { return result.subjectType.indexOf(filterPrefix) === 0; });
+        }
+      }
+      return filteredResults;
+    }
+    return results;
+  },
+
+  /* Get all predicates used in each non-excluded graph.
+  filterPrefix Allows a search term to be added to filter the subjectTypes, objectTypes and predicates for a specific prefix (useful for domain mapping) */
+  getPredicates: async function (limit, filterPrefix) {
+    let results = {};
+    let graphsInDB = await this.getGraphs();
+    for (const graph of graphsInDB.graphs) {
+      const typeQuery = `SELECT DISTINCT ?p WHERE {
+        GRAPH <${graph}> {
+          ?s ?p ?o .
+        }
+      }
+      `;
+      results[graph] = await this.executeQuery(typeQuery, limit);
+    }
+    if (filterPrefix) {
+      let filteredResults = {};
+      for (const graph in results) {
+        if (results.hasOwnProperty(graph)) {
+          filteredResults[graph] = results[graph].filter((result) => { return result.p.indexOf(filterPrefix) === 0; });
+        }
+      }
+      return filteredResults;
+    }
+    return results;
+  },
+
+  /* Get all (non-literal) relationships between resources for each non-excluded graph.
+  filterPrefix Allows a search term to be added to filter the subjectTypes, objectTypes and predicates for a specific prefix (useful for domain mapping) */
+  getRelationships: async function (limit, filterPrefix) {
     let results = {};
     let graphsInDB = await this.getGraphs();
     for (const graph of graphsInDB.graphs) {
@@ -68,11 +121,21 @@ export default {
       `;
       results[graph] = await this.executeQuery(relationshipQuery, limit);
     }
+    if (filterPrefix) {
+      let filteredResults = {};
+      for (const graph in results) {
+        if (results.hasOwnProperty(graph)) {
+          filteredResults[graph] = results[graph].filter((result) => { return result.subjectType.indexOf(filterPrefix) === 0 || result.objectType.indexOf(filterPrefix) === 0 || result.p.indexOf(filterPrefix) === 0; });
+        }
+      }
+      return filteredResults;
+    }
     return results;
   },
 
-  /* Get all literal relationships for each non-excluded graph */
-  getAttributes: async function (limit) {
+  /* Get all literal relationships for each non-excluded graph
+  filterPrefix Allows a search term to be added to filter the subjectTypes, objectTypes and predicates for a specific prefix (useful for domain mapping) */
+  getAttributes: async function (limit, filterPrefix) {
     let results = {};
     let graphsInDB = await this.getGraphs();
     for (const graph of graphsInDB.graphs) {
@@ -86,6 +149,15 @@ export default {
       `;
       let resultsForGraph = await this.executeQuery(attributesQuery, limit);
       results[graph] = resultsForGraph.filter((result) => { return result.objectType !== undefined; });
+    }
+    if (filterPrefix) {
+      let filteredResults = {};
+      for (const graph in results) {
+        if (results.hasOwnProperty(graph)) {
+          filteredResults[graph] = results[graph].filter((result) => { return result.subjectType.indexOf(filterPrefix) === 0 || result.objectType.indexOf(filterPrefix) === 0 || result.p.indexOf(filterPrefix) === 0; });
+        }
+      }
+      return filteredResults;
     }
     return results;
   }

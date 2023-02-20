@@ -36,9 +36,30 @@ router.get('/all-graphs', async function(req, res) {
   }
 });
 
+router.get('/all-types', async function(req, res) {
+  try {
+    let results = await database.getTypes(req.query.limit, req.query.filterPrefix);
+    res.send(prefixes.subsitutePrefixes(results));
+  } catch (e) {
+    console.log(e);
+    res.status(500).send(e);
+  }
+});
+
+router.get('/all-predicates', async function(req, res) {
+  try {
+    let results = await database.getPredicates(req.query.limit, req.query.filterPrefix);
+    res.send(prefixes.subsitutePrefixes(results));
+  } catch (e) {
+    console.log(e);
+    res.status(500).send(e);
+  }
+});
+
+
 router.get('/all-relationships', async function(req, res) {
   try {
-    let results = await database.getRelationships(req.query.limit);
+    let results = await database.getRelationships(req.query.limit, req.query.filterPrefix);
     res.send(prefixes.subsitutePrefixes(results));
   } catch (e) {
     console.log(e);
@@ -48,7 +69,7 @@ router.get('/all-relationships', async function(req, res) {
 
 router.get('/all-attributes', async function(req, res) {
   try {
-    let results = await database.getAttributes(req.query.limit);
+    let results = await database.getAttributes(req.query.limit, req.query.filterPrefix);
     res.send(prefixes.subsitutePrefixes(results));
   } catch (e) {
     console.log(e);
